@@ -1,0 +1,31 @@
+name: GraalVM Native Image builds on M1
+on: [push, pull_request]
+jobs:
+  build:
+    name: HelloWorld on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-14]
+    steps:
+      - uses: actions/checkout@main
+
+      - uses: graalvm/setup-graalvm@main
+        with:
+          java-version: '21'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          native-image-job-reports: 'true'
+
+      - name: Build and run HelloWorld.java
+        run: |
+          echo 'public class HelloWorld { public static void main(String[] args) { System.out.println("Hello, World!"); } }' > HelloWorld.java
+          javac HelloWorld.java
+          native-image HelloWorld
+          ./helloworld
+      
+      - name: Upload binary
+        uses: actions/upload-artifact@main
+        with:
+          name: helloworld-${{ matrix.os }}
+          path: helloworld*
